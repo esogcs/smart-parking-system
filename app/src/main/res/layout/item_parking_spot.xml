@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@android:color/white"
+    android:layout_marginBottom="12dp"
+    android:elevation="4dp">
+
+    <TextView
+        android:id="@+id/parking_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Parking Spot Name"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="#000000" />
+
+    <TextView
+        android:id="@+id/parking_location"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Location"
+        android:textColor="#666666" />
+
+    <TextView
+        android:id="@+id/parking_price"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="$5.00"
+        android:textColor="#00796B"
+        android:textStyle="italic" />
+
+    <!-- NEW: Book Button -->
+    <Button
+        android:id="@+id/book_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Book Spot"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#2196F3"
+        android:textColor="@android:color/white" />
+</LinearLayout>
