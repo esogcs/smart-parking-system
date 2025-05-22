@@ -1,44 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@android:color/white"
-    android:layout_marginBottom="12dp"
-    android:elevation="4dp">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
 
-    <TextView
-        android:id="@+id/parking_name"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Parking Spot Name"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#000000" />
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/parking_location"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Location"
-        android:textColor="#666666" />
+        <TextView
+            android:id="@+id/spotNameText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/statusIndicator"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/parking_price"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="$5.00"
-        android:textColor="#00796B"
-        android:textStyle="italic" />
+        <TextView
+            android:id="@+id/addressText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@id/statusIndicator"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/spotNameText" />
 
-    <!-- NEW: Book Button -->
-    <Button
-        android:id="@+id/book_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Book Spot"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="#2196F3"
-        android:textColor="@android:color/white" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/priceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@android:color/holo_green_dark"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/addressText" />
+
+        <View
+            android:id="@+id/statusIndicator"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:background="@drawable/circle_background"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

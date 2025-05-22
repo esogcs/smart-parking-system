@@ -6,13 +6,29 @@
     android:padding="16dp">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/emailLayout"
+        android:id="@+id/nameLayout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:hint="Email"
+        android:hint="Full Name"
         app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/nameEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/emailLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="Email"
+        app:layout_constraintTop_toBottomOf="@id/nameLayout">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/emailEditText"
@@ -38,21 +54,28 @@
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/loginButton"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/userTypeLayout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Login"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout" />
+        android:layout_marginTop="16dp"
+        android:hint="User Type"
+        app:layout_constraintTop_toBottomOf="@id/passwordLayout">
+
+        <AutoCompleteTextView
+            android:id="@+id/userTypeDropdown"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/signupButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="24dp"
         android:text="Sign Up"
-        app:layout_constraintTop_toBottomOf="@id/loginButton" />
+        app:layout_constraintTop_toBottomOf="@id/userTypeLayout" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout> 

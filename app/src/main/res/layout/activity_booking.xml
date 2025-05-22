@@ -6,53 +6,54 @@
     android:padding="16dp">
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/emailLayout"
+        android:id="@+id/startDateLayout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:hint="Email"
+        android:hint="Start Date and Time"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/emailEditText"
+            android:id="@+id/startDateEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress" />
+            android:focusable="false"
+            android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/passwordLayout"
+        android:id="@+id/endDateLayout"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="Password"
-        app:layout_constraintTop_toBottomOf="@id/emailLayout"
-        app:passwordToggleEnabled="true">
+        android:hint="End Date and Time"
+        app:layout_constraintTop_toBottomOf="@id/startDateLayout">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/passwordEditText"
+            android:id="@+id/endDateEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textPassword" />
+            android:focusable="false"
+            android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/loginButton"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/priceInfoText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Login"
-        app:layout_constraintTop_toBottomOf="@id/passwordLayout" />
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/endDateLayout" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/signupButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:id="@+id/confirmButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Sign Up"
-        app:layout_constraintTop_toBottomOf="@id/loginButton" />
+        android:layout_marginTop="32dp"
+        android:text="Confirm Booking"
+        app:layout_constraintTop_toBottomOf="@id/priceInfoText" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout> 

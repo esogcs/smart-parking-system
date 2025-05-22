@@ -1,6 +1,7 @@
 package com.example.smartparkingapp
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,12 +15,37 @@ class DashboardActivity : AppCompatActivity() {
         parkingRecycler.layoutManager = LinearLayoutManager(this)
 
         val parkingList = listOf(
-            ParkingSpot("Downtown Garage", "Main Street", 5.00),
-            ParkingSpot("Mall Lot", "5th Avenue", 3.50),
-            ParkingSpot("Airport Parking", "Airport Blvd", 7.25)
+            ParkingSpot(
+                id = "1",
+                name = "Downtown Garage",
+                address = "Main Street",
+                price = 5.00,
+                isAvailable = true,
+                ownerId = "owner1"
+            ),
+            ParkingSpot(
+                id = "2",
+                name = "Mall Lot",
+                address = "5th Avenue",
+                price = 3.50,
+                isAvailable = true,
+                ownerId = "owner2"
+            ),
+            ParkingSpot(
+                id = "3",
+                name = "Airport Parking",
+                address = "Airport Blvd",
+                price = 7.25,
+                isAvailable = true,
+                ownerId = "owner3"
+            )
         )
 
-        val adapter = ParkingAdapter(parkingList)
+        // Set up the adapter with the parking list
+        val adapter = ParkingSpotAdapter(parkingList) { spot ->
+            // Show a toast message when a parking spot is clicked
+            Toast.makeText(this, "Selected: ${spot.name}", Toast.LENGTH_SHORT).show()
+        }
         parkingRecycler.adapter = adapter
     }
 }
