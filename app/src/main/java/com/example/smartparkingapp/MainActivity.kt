@@ -1,11 +1,10 @@
 package com.example.smartparkingapp
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -17,6 +16,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
+
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ParkingSpotAdapter
     private lateinit var addParkingSpotFab: FloatingActionButton
@@ -34,17 +34,18 @@ class MainActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        // Initialize views
-        recyclerView = findViewById(R.id.parkingSpotsRecyclerView)
-        addParkingSpotFab = findViewById(R.id.addParkingSpotFab)
-        mapFab = findViewById(R.id.mapFab)
-        searchView = findViewById<SearchView>(R.id.searchView)
-
+        initViews()
         setupRecyclerView()
         setupSearch()
         setupFabListeners()
-
         fetchUserRole()
+    }
+
+    private fun initViews() {
+        recyclerView = findViewById(R.id.parkingSpotsRecyclerView)
+        addParkingSpotFab = findViewById(R.id.addParkingSpotFab)
+        mapFab = findViewById(R.id.mapFab)
+        searchView = findViewById(R.id.searchView)
     }
 
     private fun setupRecyclerView() {
@@ -55,11 +56,8 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "This parking spot is not available", Toast.LENGTH_SHORT).show()
             }
         }
-
-        recyclerView.apply {
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = this@MainActivity.adapter
-        }
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
     }
 
     private fun setupFabListeners() {
@@ -77,24 +75,17 @@ class MainActivity : AppCompatActivity() {
 
         db.collection("users").document(uid)
             .get()
-            .addOnSuccessListener { doc ->
-                if (doc.exists()) {
-                    currentUserType = doc.getString("userType")
-                    configureFabVisibility()
-                    loadParkingSpots()
-                } else {
-                    Toast.makeText(this, "User record not found", Toast.LENGTH_SHORT).show()
-                    configureFabVisibility()
-                    loadParkingSpots()
-                }
+            .addOnSuccessListener { document ->
+                currentUserType = document.getString("userType")
+                configureFabVisibility()
+                loadParkingSpots()
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error fetching user role", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to retrieve user role", Toast.LENGTH_SHORT).show()
                 configureFabVisibility()
                 loadParkingSpots()
             }
     }
-
 
     private fun configureFabVisibility() {
         if (currentUserType == "Parking Lot Owner") {
@@ -122,22 +113,24 @@ class MainActivity : AppCompatActivity() {
     private fun setupSearch() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean = false
+
             override fun onQueryTextChange(newText: String?): Boolean {
-                val query = newText.orEmpty().trim().lowercase()
-                filteredSpots.apply {
-                    clear()
-                    addAll(
-                        if (query.isEmpty()) allSpots
-                        else allSpots.filter {
-                            it.name.lowercase().contains(query) ||
-                                    it.address.lowercase().contains(query)
-                        }
-                    )
-                }
-                adapter.updateSpots(filteredSpots)
+                filterParkingSpots(newText)
                 return true
             }
         })
+    }
+
+    private fun filterParkingSpots(query: String?) {
+        val search = query.orEmpty().trim().lowercase()
+        filteredSpots.clear()
+        filteredSpots.addAll(
+            if (search.isEmpty()) allSpots
+            else allSpots.filter {
+                it.name.lowercase().contains(search) || it.address.lowercase().contains(search)
+            }
+        )
+        adapter.updateSpots(filteredSpots)
     }
 
     private fun loadParkingSpots() {

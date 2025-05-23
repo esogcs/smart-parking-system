@@ -5,10 +5,12 @@ import android.app.TimePickerDialog
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -139,16 +141,16 @@ class BookingActivity : AppCompatActivity() {
 
                 // ✅ Insert into local Room database
                 val duration = ((endTime - startTime) / (1000 * 60)).toInt() // duration in minutes
-                val history = ParkingHistory(
+                val historyEntity = ParkingHistoryEntity(
                     userId = userId,
-                    locationName = parkingSpot.name, // or use selectedLocation if available
+                    locationName = parkingSpot.name,
                     parkedAt = startTime,
                     durationMinutes = duration
                 )
 
-                Thread {
-                    AppDatabase.getInstance(this).parkingHistoryDao().insert(history)
-                }.start()
+                lifecycleScope.launch {
+                    AppDatabase.getInstance(this@BookingActivity).parkingHistoryDao().insert(historyEntity)
+                }
 
                 finish()
             }
