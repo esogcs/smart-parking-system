@@ -1,7 +1,9 @@
 package com.example.smartparkingapp
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import androidx.appcompat.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -12,11 +14,18 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: ParkingSpotAdapter
     private lateinit var addParkingSpotFab: FloatingActionButton
+    private lateinit var mapFab: FloatingActionButton
+    private lateinit var searchView: SearchView
+
+    private val allSpots = mutableListOf<ParkingSpot>()
+    private val filteredSpots = mutableListOf<ParkingSpot>()
+    private var currentUserType: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,10 +37,18 @@ class MainActivity : AppCompatActivity() {
         // Initialize views
         recyclerView = findViewById(R.id.parkingSpotsRecyclerView)
         addParkingSpotFab = findViewById(R.id.addParkingSpotFab)
+        mapFab = findViewById(R.id.mapFab)
+        searchView = findViewById<SearchView>(R.id.searchView)
 
-        // Setup RecyclerView
-        adapter = ParkingSpotAdapter(emptyList()) { spot ->
-            // Handle parking spot click
+        setupRecyclerView()
+        setupSearch()
+        setupFabListeners()
+
+        fetchUserRole()
+    }
+
+    private fun setupRecyclerView() {
+        adapter = ParkingSpotAdapter(filteredSpots) { spot ->
             if (spot.isAvailable) {
                 startBookingActivity(spot)
             } else {
@@ -43,124 +60,122 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = this@MainActivity.adapter
         }
-
-        // Setup FAB - Only show for parking lot owners
-        addParkingSpotFab.setOnClickListener {
-            checkUserTypeAndAddParkingSpot()
-        }
-
-        // Load parking spots
-        loadParkingSpots()
     }
 
-    private fun startBookingActivity(spot: ParkingSpot) {
-        val intent = Intent(this, BookingActivity::class.java).apply {
-            putExtra("parkingSpot", spot)
-        }
-        startActivity(intent)
+    private fun setupFabListeners() {
+        addParkingSpotFab.setOnClickListener { addSpotAction() }
+        mapFab.setOnClickListener { openMap() }
     }
 
-    private fun checkUserTypeAndAddParkingSpot() {
-        val userId = auth.currentUser?.uid ?: run {
-            Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show()
+    private fun fetchUserRole() {
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            finish()
             return
         }
 
-        db.collection("users")
-            .document(userId)
+        db.collection("users").document(uid)
             .get()
-            .addOnSuccessListener { document ->
-                val userType = document.getString("userType")
-                if (userType == "Parking Lot Owner") {
-                    // TODO: Implement add parking spot functionality
-                    Toast.makeText(this, "Add parking spot clicked", Toast.LENGTH_SHORT).show()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    currentUserType = doc.getString("userType")
+                    configureFabVisibility()
+                    loadParkingSpots()
                 } else {
-                    Toast.makeText(this, "Only parking lot owners can add spots", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "User record not found", Toast.LENGTH_SHORT).show()
+                    configureFabVisibility()
+                    loadParkingSpots()
                 }
             }
-            .addOnFailureListener { e ->
-                Toast.makeText(this, "Error checking user type: ${e.message}", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener {
+                Toast.makeText(this, "Error fetching user role", Toast.LENGTH_SHORT).show()
+                configureFabVisibility()
+                loadParkingSpots()
             }
     }
 
+
+    private fun configureFabVisibility() {
+        if (currentUserType == "Parking Lot Owner") {
+            addParkingSpotFab.show()
+        } else {
+            addParkingSpotFab.hide()
+        }
+    }
+
+    private fun addSpotAction() {
+        if (currentUserType == "Parking Lot Owner") {
+            val intent = Intent(this, AddParkingSpotActivity::class.java)
+            startActivity(intent)
+        } else {
+            Toast.makeText(this, "Only parking lot owners can add spots", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openMap() {
+        val intent = Intent(this, MapsActivity::class.java)
+        intent.putParcelableArrayListExtra("spots", ArrayList(filteredSpots))
+        startActivity(intent)
+    }
+
+    private fun setupSearch() {
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = false
+            override fun onQueryTextChange(newText: String?): Boolean {
+                val query = newText.orEmpty().trim().lowercase()
+                filteredSpots.apply {
+                    clear()
+                    addAll(
+                        if (query.isEmpty()) allSpots
+                        else allSpots.filter {
+                            it.name.lowercase().contains(query) ||
+                                    it.address.lowercase().contains(query)
+                        }
+                    )
+                }
+                adapter.updateSpots(filteredSpots)
+                return true
+            }
+        })
+    }
+
     private fun loadParkingSpots() {
-        // First, try to load from Firestore
         db.collection("parkingSpots")
             .get()
             .addOnSuccessListener { documents ->
-                if (documents.isEmpty) {
-                    // If no data in Firestore, show sample data
-                    showSampleData()
-                } else {
-                    val spots = documents.mapNotNull { doc: QueryDocumentSnapshot ->
-                        doc.toObject(ParkingSpot::class.java)
-                    }
-                    adapter.updateSpots(spots)
+                allSpots.clear()
+                for (doc: QueryDocumentSnapshot in documents) {
+                    allSpots.add(doc.toObject(ParkingSpot::class.java))
                 }
+                filteredSpots.clear()
+                filteredSpots.addAll(allSpots)
+                adapter.updateSpots(filteredSpots)
             }
             .addOnFailureListener { e ->
-                // If Firestore fails, show sample data
-                Toast.makeText(this, "Using sample data: ${e.message}",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Using sample data: ${e.message}", Toast.LENGTH_SHORT).show()
                 showSampleData()
             }
     }
 
     private fun showSampleData() {
-        val sampleSpots = listOf(
-            ParkingSpot(
-                id = "1",
-                name = "Downtown Garage",
-                address = "123 Main Street",
-                price = 5.00,
-                isAvailable = true,
-                ownerId = "owner1",
-                totalSpots = 50,
-                availableSpots = 25,
-                latitude = 40.7128,
-                longitude = -74.0060,
-                description = "Secure parking garage in downtown area"
-            ),
-            ParkingSpot(
-                id = "2",
-                name = "Mall Parking",
-                address = "456 Shopping Ave",
-                price = 3.50,
-                isAvailable = true,
-                ownerId = "owner2",
-                totalSpots = 100,
-                availableSpots = 75,
-                latitude = 40.7589,
-                longitude = -73.9851,
-                description = "Large parking lot near shopping mall"
-            ),
-            ParkingSpot(
-                id = "3",
-                name = "Airport Parking",
-                address = "789 Airport Blvd",
-                price = 7.25,
-                isAvailable = false,
-                ownerId = "owner3",
-                totalSpots = 200,
-                availableSpots = 0,
-                latitude = 40.6413,
-                longitude = -73.7781,
-                description = "Long-term parking at airport"
-            ),
-            ParkingSpot(
-                id = "4",
-                name = "City Center Lot",
-                address = "321 Downtown Rd",
-                price = 4.00,
-                isAvailable = true,
-                ownerId = "owner4",
-                totalSpots = 30,
-                availableSpots = 15,
-                latitude = 40.7829,
-                longitude = -73.9654,
-                description = "Convenient parking in city center"
+        allSpots.clear()
+        allSpots.addAll(
+            listOf(
+                ParkingSpot("1", "Downtown Garage", "123 Main Street", 5.00, true, "owner1", 50, 25, 40.7128, -74.0060, "Secure parking garage"),
+                ParkingSpot("2", "Mall Parking", "456 Shopping Ave", 3.50, true, "owner2", 100, 75, 40.7589, -73.9851, "Large parking lot"),
+                ParkingSpot("3", "Airport Parking", "789 Airport Blvd", 7.25, false, "owner3", 200, 0, 40.6413, -73.7781, "Long-term parking"),
+                ParkingSpot("4", "City Center Lot", "321 Downtown Rd", 4.00, true, "owner4", 30, 15, 40.7829, -73.9654, "City center parking")
             )
         )
-        adapter.updateSpots(sampleSpots)
+        filteredSpots.clear()
+        filteredSpots.addAll(allSpots)
+        adapter.updateSpots(filteredSpots)
+    }
+
+    private fun startBookingActivity(spot: ParkingSpot) {
+        val intent = Intent(this, BookingActivity::class.java)
+        intent.putExtra("parkingSpot", spot)
+        startActivity(intent)
     }
 }

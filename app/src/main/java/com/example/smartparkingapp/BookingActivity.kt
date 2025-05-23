@@ -29,11 +29,13 @@ class BookingActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
 
         // Get parking spot from intent
-        parkingSpot = intent.getParcelableExtra("parkingSpot", ParkingSpot::class.java) ?: run {
+        @Suppress("DEPRECATION")
+        parkingSpot = intent.getParcelableExtra("parkingSpot") as? ParkingSpot ?: run {
             Toast.makeText(this, "Error: Parking spot not found", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
+
 
         // Initialize views
         startDateEditText = findViewById(R.id.startDateEditText)

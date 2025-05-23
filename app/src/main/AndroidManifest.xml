@@ -15,6 +15,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartParkingAppTest"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCt0zFpnKC8HIq-CxxzflZaEkzguZEi57Q"/>
+
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -39,6 +43,9 @@
         <activity
             android:name=".BookingActivity"
             android:exported="false" />
+
+        <activity android:name=".AddParkingSpotActivity" android:exported="false" />
+        <activity android:name=".MapsActivity" android:exported="false" />
 
     </application>
 
