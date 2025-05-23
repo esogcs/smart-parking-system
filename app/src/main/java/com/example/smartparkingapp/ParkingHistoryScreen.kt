@@ -44,8 +44,9 @@ fun ParkingHistoryScreen(parkingHistoryList: List<ParkingHistoryEntity>) {
             ) {
                 items(
                     items = parkingHistoryList,
-                    key = { it.id }  // stable key
-                ) { history ->
+                    key = { "${it.locationName}-${it.parkedAt}-${it.durationMinutes}" }
+                )
+                { history ->
                     ParkingHistoryItem(history)
                 }
             }

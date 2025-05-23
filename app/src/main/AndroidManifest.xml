@@ -48,6 +48,7 @@
 
         <activity android:name=".AddParkingSpotActivity" android:exported="false" />
         <activity android:name=".MapsActivity" android:exported="false" />
+        <activity android:name=".ParkingHistoryActivity"/>
 
     </application>
 

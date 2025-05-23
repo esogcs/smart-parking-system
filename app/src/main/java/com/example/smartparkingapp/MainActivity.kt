@@ -25,7 +25,10 @@ class MainActivity : AppCompatActivity() {
 
     private val allSpots = mutableListOf<ParkingSpot>()
     private val filteredSpots = mutableListOf<ParkingSpot>()
+
     private var currentUserType: String? = null
+    private lateinit var historyFab: FloatingActionButton
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,18 +39,21 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         setupRecyclerView()
-        setupSearch()
         setupFabListeners()
+        setupSearch()
         fetchUserRole()
     }
 
+    /** Initializes view references */
     private fun initViews() {
         recyclerView = findViewById(R.id.parkingSpotsRecyclerView)
         addParkingSpotFab = findViewById(R.id.addParkingSpotFab)
         mapFab = findViewById(R.id.mapFab)
         searchView = findViewById(R.id.searchView)
+        historyFab = findViewById(R.id.historyFab)
     }
 
+    /** Configures RecyclerView and adapter */
     private fun setupRecyclerView() {
         adapter = ParkingSpotAdapter(filteredSpots) { spot ->
             if (spot.isAvailable) {
@@ -60,13 +66,49 @@ class MainActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
     }
 
+    /** Sets up Floating Action Button click listeners */
     private fun setupFabListeners() {
         addParkingSpotFab.setOnClickListener { addSpotAction() }
         mapFab.setOnClickListener { openMap() }
+        historyFab.setOnClickListener {
+            startActivity(Intent(this, ParkingHistoryActivity::class.java))
+        }
+
     }
 
+    /** Enables search filtering */
+    private fun setupSearch() {
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = false
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                filterParkingSpots(newText)
+                return true
+            }
+        })
+    }
+
+    /** Filters parking spots based on search query */
+    private fun filterParkingSpots(query: String?) {
+        val search = query.orEmpty().trim().lowercase()
+        filteredSpots.clear()
+
+        val results = if (search.isEmpty()) {
+            allSpots
+        } else {
+            allSpots.filter {
+                it.name.lowercase().contains(search) || it.address.lowercase().contains(search)
+            }
+        }
+
+        filteredSpots.addAll(results)
+        adapter.updateSpots(filteredSpots)
+    }
+
+    /** Loads user role and parking data */
     private fun fetchUserRole() {
         val uid = auth.currentUser?.uid
+
         if (uid == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
             finish()
@@ -87,6 +129,7 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    /** Shows/hides FAB based on user type */
     private fun configureFabVisibility() {
         if (currentUserType == "Parking Lot Owner") {
             addParkingSpotFab.show()
@@ -95,44 +138,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun addSpotAction() {
-        if (currentUserType == "Parking Lot Owner") {
-            val intent = Intent(this, AddParkingSpotActivity::class.java)
-            startActivity(intent)
-        } else {
-            Toast.makeText(this, "Only parking lot owners can add spots", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun openMap() {
-        val intent = Intent(this, MapsActivity::class.java)
-        intent.putParcelableArrayListExtra("spots", ArrayList(filteredSpots))
-        startActivity(intent)
-    }
-
-    private fun setupSearch() {
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean = false
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                filterParkingSpots(newText)
-                return true
-            }
-        })
-    }
-
-    private fun filterParkingSpots(query: String?) {
-        val search = query.orEmpty().trim().lowercase()
-        filteredSpots.clear()
-        filteredSpots.addAll(
-            if (search.isEmpty()) allSpots
-            else allSpots.filter {
-                it.name.lowercase().contains(search) || it.address.lowercase().contains(search)
-            }
-        )
-        adapter.updateSpots(filteredSpots)
-    }
-
+    /** Loads parking spots from Firestore */
     private fun loadParkingSpots() {
         db.collection("parkingSpots")
             .get()
@@ -141,9 +147,7 @@ class MainActivity : AppCompatActivity() {
                 for (doc: QueryDocumentSnapshot in documents) {
                     allSpots.add(doc.toObject(ParkingSpot::class.java))
                 }
-                filteredSpots.clear()
-                filteredSpots.addAll(allSpots)
-                adapter.updateSpots(filteredSpots)
+                updateFilteredSpots(allSpots)
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Using sample data: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -151,6 +155,31 @@ class MainActivity : AppCompatActivity() {
             }
     }
 
+    /** Updates filtered list and notifies adapter */
+    private fun updateFilteredSpots(spots: List<ParkingSpot>) {
+        filteredSpots.clear()
+        filteredSpots.addAll(spots)
+        adapter.updateSpots(filteredSpots)
+    }
+
+    /** Launches AddParkingSpotActivity */
+    private fun addSpotAction() {
+        if (currentUserType == "Parking Lot Owner") {
+            startActivity(Intent(this, AddParkingSpotActivity::class.java))
+        } else {
+            Toast.makeText(this, "Only parking lot owners can add spots", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Opens map activity with current filtered spots */
+    private fun openMap() {
+        val intent = Intent(this, MapsActivity::class.java).apply {
+            putParcelableArrayListExtra("spots", ArrayList(filteredSpots))
+        }
+        startActivity(intent)
+    }
+
+    /** Loads fallback data if Firestore fails */
     private fun showSampleData() {
         allSpots.clear()
         allSpots.addAll(
@@ -161,14 +190,14 @@ class MainActivity : AppCompatActivity() {
                 ParkingSpot("4", "City Center Lot", "321 Downtown Rd", 4.00, true, "owner4", 30, 15, 40.7829, -73.9654, "City center parking")
             )
         )
-        filteredSpots.clear()
-        filteredSpots.addAll(allSpots)
-        adapter.updateSpots(filteredSpots)
+        updateFilteredSpots(allSpots)
     }
 
+    /** Starts booking activity for selected spot */
     private fun startBookingActivity(spot: ParkingSpot) {
-        val intent = Intent(this, BookingActivity::class.java)
-        intent.putExtra("parkingSpot", spot)
+        val intent = Intent(this, BookingActivity::class.java).apply {
+            putExtra("parkingSpot", spot)
+        }
         startActivity(intent)
     }
 }
