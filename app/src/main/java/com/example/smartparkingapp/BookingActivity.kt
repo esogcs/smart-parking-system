@@ -136,10 +136,25 @@ class BookingActivity : AppCompatActivity() {
             .set(booking)
             .addOnSuccessListener {
                 Toast.makeText(this, "Booking created successfully", Toast.LENGTH_SHORT).show()
+
+                // ✅ Insert into local Room database
+                val duration = ((endTime - startTime) / (1000 * 60)).toInt() // duration in minutes
+                val history = ParkingHistory(
+                    userId = userId,
+                    locationName = parkingSpot.name, // or use selectedLocation if available
+                    parkedAt = startTime,
+                    durationMinutes = duration
+                )
+
+                Thread {
+                    AppDatabase.getInstance(this).parkingHistoryDao().insert(history)
+                }.start()
+
                 finish()
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Error creating booking: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
 } 
