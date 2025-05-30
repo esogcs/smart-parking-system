@@ -2,6 +2,7 @@ package com.example.smartparkingapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -11,6 +12,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
+import androidx.activity.result.contract.ActivityResultContracts
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,6 +31,19 @@ class MainActivity : AppCompatActivity() {
 
     private var currentUserType: String? = null
     private lateinit var historyFab: FloatingActionButton
+
+    private val addSpotLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val spot = result.data?.getParcelableExtra<ParkingSpot>("newSpot")
+            if (spot != null) {
+                allSpots.add(spot)
+                filteredSpots.add(spot)
+                adapter.updateSpots(filteredSpots)
+            }
+        }
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -144,16 +160,24 @@ class MainActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { documents ->
                 allSpots.clear()
+                if (documents.isEmpty) {
+                    Toast.makeText(this, "No data found. Showing sample spots.", Toast.LENGTH_SHORT).show()
+                    showSampleData()
+                    return@addOnSuccessListener
+                }
                 for (doc: QueryDocumentSnapshot in documents) {
-                    allSpots.add(doc.toObject(ParkingSpot::class.java))
+                    val spot = doc.toObject(ParkingSpot::class.java)
+                    allSpots.add(spot)
                 }
                 updateFilteredSpots(allSpots)
+                Log.d("MainActivity", "Loaded ${documents.size()} documents")
             }
             .addOnFailureListener { e ->
                 Toast.makeText(this, "Using sample data: ${e.message}", Toast.LENGTH_SHORT).show()
                 showSampleData()
             }
     }
+
 
     /** Updates filtered list and notifies adapter */
     private fun updateFilteredSpots(spots: List<ParkingSpot>) {
@@ -166,6 +190,13 @@ class MainActivity : AppCompatActivity() {
     private fun addSpotAction() {
         if (currentUserType == "Parking Lot Owner") {
             startActivity(Intent(this, AddParkingSpotActivity::class.java))
+        } else {
+            Toast.makeText(this, "Only parking lot owners can add spots", Toast.LENGTH_SHORT).show()
+        }
+
+        if (currentUserType == "Parking Lot Owner") {
+            val intent = Intent(this, AddParkingSpotActivity::class.java)
+            addSpotLauncher.launch(intent)
         } else {
             Toast.makeText(this, "Only parking lot owners can add spots", Toast.LENGTH_SHORT).show()
         }
